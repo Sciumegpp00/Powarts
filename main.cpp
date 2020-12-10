@@ -23,7 +23,7 @@ class City {
     unsigned int minimumDistance;
     list<City*> minimumDistanceFrom;
     bool minimumDistancePropagated = false;
-    unsigned short int citiesDamaged = 0;
+    list<City*> citiesDamaged;
     bool foundDamagedCities = false;
 
 public:
@@ -45,7 +45,7 @@ public:
         for(auto city : minimumDistanceFrom){
             cout << city->id << " ";
         }
-        cout << "  damaged cities -> " << citiesDamaged << "\n";
+        cout << "  damaged cities -> " << citiesDamaged.size() << "\n";
     }
     void calculateDistancesFromHere() {
         minimumDistance = 0;
@@ -84,18 +84,18 @@ public:
             edge->node->calculateCitiesDamage();
         }
 
-        citiesDamaged = 0;
+        citiesDamaged.clear();
     }
-    unsigned short int calculateCitiesDamage(){
+    list<City*> calculateCitiesDamage(){
         if(foundDamagedCities)
             return citiesDamaged;
         foundDamagedCities = true;
 
-        citiesDamaged = 1;
+        citiesDamaged.push_front(this);
         for(auto e : edges){
             for(auto city : e->node->minimumDistanceFrom){
                 if(city == this && e->node->minimumDistanceFrom.size() == 1){
-                    citiesDamaged += e->node->calculateCitiesDamage();
+                    citiesDamaged.merge(e->node->calculateCitiesDamage());
                 }
             }
         }

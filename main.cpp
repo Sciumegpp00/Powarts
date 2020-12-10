@@ -18,6 +18,7 @@ struct Edge {
 };
 
 struct City {
+    //Attributes
     unsigned short id;
     list<Edge*> edges;
     unsigned int minimumDistance;
@@ -26,6 +27,7 @@ struct City {
     list<City*> citiesDamaged;
     bool foundDamagedCities = false;
 
+    //Methods
     City(unsigned short id) {
         this->id = id;
     }
@@ -36,15 +38,24 @@ struct City {
             delete n;
         }
     }
+
     void addEdge(Edge* edge) {
         edges.push_front(edge);
     }
+
     void print() const {
         cout << "City   id -> " << id << "   distance -> " << minimumDistance << "   from ";
         for(auto city : minimumDistanceFrom){
             cout << city->id << " ";
         }
         cout << "  damaged cities -> " << citiesDamaged.size() << "\n";
+    }
+
+    void calculateDistancesFromHere() {
+        minimumDistance = 0;
+        minimumDistanceFrom.push_front(this);
+
+        calculateEdges();
     }
 
     void calculateDistanceFrom(City* from, unsigned int weight) {
@@ -62,6 +73,7 @@ struct City {
 
         calculateEdges();
     }
+
     void calculateEdges() {
         if (minimumDistancePropagated)
             return;
@@ -81,6 +93,7 @@ struct City {
 
         citiesDamaged.clear();
     }
+
     list<City*> calculateCitiesDamage(){
         if(foundDamagedCities)
             return citiesDamaged;
@@ -107,15 +120,20 @@ struct City {
 };
 
 
-void calculateDistance(City **cities, unsigned short p) {
+void calculateMinimumPath(City **cities, unsigned short p) {
     auto powarts = cities[p];
 
     powarts->minimumDistance = 0;
     powarts->minimumDistanceFrom.push_front(powarts);
     powarts->minimumDistancePropagated = true;
 
-    auto c = powarts->edges.begin();
-    while (true) {
+    //For each node directly connected with Powarts calculate the distance from powarts
+    // and call the same thing for its edges
+    for(Edge* e : powarts->edges){
+        e->node->calculateDistanceFrom(powarts, e->distance);
+        for(auto subEdge : e->node->edges){
+            subEdge->node->calculateDistanceFrom(e->node, subEdge->distance + e->node->minimumDistance);
+        }
     }
 }
 
@@ -123,7 +141,7 @@ void calculateDistance(City **cities, unsigned short p) {
 int main() {
     unsigned short int N, P;
     unsigned int M;
-    ifstream in("input.txt");
+    ifstream in("input3.txt");
     in >> N; // Cities number
     in >> M; // Edges number
     in >> P; // Powarts city id
@@ -157,7 +175,7 @@ int main() {
 
     City* maxDamagedCity = cities[0];
     for (unsigned short int i = 0; i < N; i++) {
-//        cities[i]->print();
+        cities[i]->print();
 
         if(cities[i]->getCitiesDamaged().size() > maxDamagedCity->getCitiesDamaged().size()){
             maxDamagedCity = cities[i];

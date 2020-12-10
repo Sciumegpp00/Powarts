@@ -115,7 +115,7 @@ public:
 int main() {
     unsigned short int N, P;
     unsigned int M;
-    ifstream in("input0.txt");
+    ifstream in("input.txt");
     in >> N; // Cities number
     in >> M; // Edges number
     in >> P; // Powarts city id
@@ -156,12 +156,13 @@ int main() {
         }
     }
 
+    cout << "Max damage city: " << maxDamagedCity->getCitiesDamaged().size();
 //    maxDamagedCity->print();
 
     ofstream out("output.txt");
-    out << maxDamagedCity->getCitiesDamaged().size();
+    out << maxDamagedCity->getCitiesDamaged().size() << '\n';
     for(auto c : maxDamagedCity->getCitiesDamaged()) {
-        out << c->getId();
+        out << c->getId() << '\n';
     }
     in.close();
     out.close();

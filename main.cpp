@@ -101,6 +101,10 @@ public:
         }
         return citiesDamaged;
     }
+
+    unsigned short getDamagedSize(){
+        return citiesDamaged.size();
+    };
 };
 
 
@@ -139,9 +143,16 @@ int main() {
     cities[P]->calculateDistancesFromHere();
     cities[P]->calculateCitiesDamageFromHere();
 
+    City* maxDamagedCity = cities[0];
     for (unsigned short int i = 0; i < N; i++) {
         cities[i]->print();
+
+        if(cities[i]->getDamagedSize() > maxDamagedCity->getDamagedSize()){
+            maxDamagedCity = cities[i];
+        }
     }
+
+    maxDamagedCity->print();
 
     ofstream out("output.txt");
     // TODO: Write output

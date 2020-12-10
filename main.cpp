@@ -4,27 +4,26 @@
 
 using namespace std;
 
-struct Distance;
 struct Edge;
 class City;
 //class Graph;
 
 struct Edge {
     City* node;
-    int weight;
+    unsigned short int distance;
 
     Edge(City* node, int weight) {
         this->node = node;
-        this->weight = weight;
+        this->distance = weight;
     }
 };
 
 class City {
-    int id;
+    unsigned short int id;
     list<Edge*> edges;
-    int distance;
-    list<City*> distanceFrom;
-    bool distancePropagated = false;
+    unsigned short int minimumDistance;
+    list<City*> minimumDistanceFrom;
+    bool minimumDistancePropagated = false;
 
 public:
     City(int id) {
@@ -41,35 +40,36 @@ public:
         edges.push_front(edge);
     }
     void print() const {
-        cout << "City   id -> " << id << "   distance -> " << distance << '\n';
+        cout << "City   id -> " << id << "   distance -> " << minimumDistance << '\n';
     }
     void calculateDistancesFromHere() {
-        distance = 0;
-        distanceFrom.push_front(this);
+        minimumDistance = 0;
+        minimumDistanceFrom.push_front(this);
 
         calculateEdges();
     }
     void calculateDistanceFrom(City* from, int weight) {
-        if(distanceFrom.empty()) {
-            distance = weight;
-            distanceFrom.push_front(from);
-        } else if(distance == weight) {
-            distanceFrom.push_front(from);
-        } else if(weight < distance) {
-            distance = weight;
-            distanceFrom.clear();
-            distanceFrom.push_front(from);
+        if(minimumDistanceFrom.empty()) {
+            minimumDistance = weight;
+            minimumDistanceFrom.push_front(from);
+        } else if(minimumDistance == weight) {
+            minimumDistanceFrom.push_front(from);
+        } else if(weight < minimumDistance) {
+            minimumDistance = weight;
+            minimumDistanceFrom.clear();
+            minimumDistanceFrom.push_front(from);
+            minimumDistancePropagated = false;
         }
 
         calculateEdges();
     }
     void calculateEdges() {
-        if (distancePropagated)
+        if (minimumDistancePropagated)
             return;
-        distancePropagated = true;
+        minimumDistancePropagated = true;
 
         for (auto edge : edges) {
-            edge->node->calculateDistanceFrom(this, distance + edge->weight);
+            edge->node->calculateDistanceFrom(this, minimumDistance + edge->distance);
         }
     }
 };
@@ -83,19 +83,20 @@ public:
 //};
 
 
-int N, M, P;
+unsigned short int N, P;
+unsigned int M;
 
 int main() {
-    ifstream in("input.txt");
+    ifstream in("input0.txt");
     in >> N; // Cities number
     in >> M; // Edges number
     in >> P; // Powarts city id
     cout << "Cities: " << N << '\n';
     City **cities = (City**) calloc(N, sizeof(City*));
 
-    int c1Id, c2Id, w;
+    unsigned int c1Id, c2Id, w;
     City *c1, *c2;
-    for (int i = 0; i < M; i++) {
+    for (unsigned int i = 0; i < M; i++) {
         in >> c1Id;
         in >> c2Id;
         in >> w;
@@ -117,7 +118,7 @@ int main() {
 
     cities[P]->calculateDistancesFromHere();
 
-    for (int i = 0; i < N; i++) {
+    for (unsigned short int i = 0; i < N; i++) {
         cities[i]->print();
     }
 

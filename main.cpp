@@ -17,7 +17,7 @@ struct Edge {
     }
 };
 
-class City {
+struct City {
     unsigned short id;
     list<Edge*> edges;
     unsigned int minimumDistance;
@@ -26,7 +26,6 @@ class City {
     list<City*> citiesDamaged;
     bool foundDamagedCities = false;
 
-public:
     City(unsigned short id) {
         this->id = id;
     }
@@ -47,12 +46,7 @@ public:
         }
         cout << "  damaged cities -> " << citiesDamaged.size() << "\n";
     }
-    void calculateDistancesFromHere() {
-        minimumDistance = 0;
-        minimumDistanceFrom.push_front(this);
 
-        calculateEdges();
-    }
     void calculateDistanceFrom(City* from, unsigned int weight) {
         if(minimumDistanceFrom.empty()) {
             minimumDistance = weight;
@@ -77,6 +71,7 @@ public:
             edge->node->calculateDistanceFrom(this, minimumDistance + edge->distance);
         }
     }
+
     void calculateCitiesDamageFromHere(){
         foundDamagedCities = true;
 
@@ -110,6 +105,19 @@ public:
         return id;
     };
 };
+
+
+void calculateDistance(City **cities, unsigned short p) {
+    auto powarts = cities[p];
+
+    powarts->minimumDistance = 0;
+    powarts->minimumDistanceFrom.push_front(powarts);
+    powarts->minimumDistancePropagated = true;
+
+    auto c = powarts->edges.begin();
+    while (true) {
+    }
+}
 
 
 int main() {

@@ -6,7 +6,6 @@ using namespace std;
 
 struct Edge;
 class City;
-//class Graph;
 
 struct Edge {
     City* node;
@@ -21,9 +20,11 @@ struct Edge {
 class City {
     unsigned short int id;
     list<Edge*> edges;
-    unsigned short int minimumDistance;
+    unsigned int minimumDistance;
     list<City*> minimumDistanceFrom;
     bool minimumDistancePropagated = false;
+    unsigned short int citiesDamaged = 0;
+    bool foundDamagedCities = false;
 
 public:
     City(int id) {
@@ -40,7 +41,11 @@ public:
         edges.push_front(edge);
     }
     void print() const {
-        cout << "City   id -> " << id << "   distance -> " << minimumDistance << '\n';
+        cout << "City   id -> " << id << "   distance -> " << minimumDistance << "   from ";
+        for(auto city : minimumDistanceFrom){
+            cout << city->id << " ";
+        }
+        cout << "  damaged cities -> " << citiesDamaged << "\n";
     }
     void calculateDistancesFromHere() {
         minimumDistance = 0;
@@ -48,7 +53,7 @@ public:
 
         calculateEdges();
     }
-    void calculateDistanceFrom(City* from, int weight) {
+    void calculateDistanceFrom(City* from, unsigned int weight) {
         if(minimumDistanceFrom.empty()) {
             minimumDistance = weight;
             minimumDistanceFrom.push_front(from);
@@ -72,21 +77,36 @@ public:
             edge->node->calculateDistanceFrom(this, minimumDistance + edge->distance);
         }
     }
+    void calculateCitiesDamageFromHere(){
+        foundDamagedCities = true;
+
+        for(auto edge : edges){
+            edge->node->calculateCitiesDamage();
+        }
+
+        citiesDamaged = 0;
+    }
+    unsigned short int calculateCitiesDamage(){
+        if(foundDamagedCities)
+            return citiesDamaged;
+        foundDamagedCities = true;
+
+        citiesDamaged = 1;
+        for(auto e : edges){
+            for(auto city : e->node->minimumDistanceFrom){
+                if(city == this && e->node->minimumDistanceFrom.size() == 1){
+                    citiesDamaged += e->node->calculateCitiesDamage();
+                }
+            }
+        }
+        return citiesDamaged;
+    }
 };
 
-//class Graph {
-//    City* powarts;
-//
-//    Graph() {
-//        powards = new City();
-//    }
-//};
-
-
-unsigned short int N, P;
-unsigned int M;
 
 int main() {
+    unsigned short int N, P;
+    unsigned int M;
     ifstream in("input0.txt");
     in >> N; // Cities number
     in >> M; // Edges number
@@ -117,6 +137,7 @@ int main() {
     }
 
     cities[P]->calculateDistancesFromHere();
+    cities[P]->calculateCitiesDamageFromHere();
 
     for (unsigned short int i = 0; i < N; i++) {
         cities[i]->print();

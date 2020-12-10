@@ -9,16 +9,16 @@ class City;
 
 struct Edge {
     City* node;
-    unsigned short int distance;
+    unsigned short distance;
 
-    Edge(City* node, int weight) {
+    Edge(City* node, unsigned short weight) {
         this->node = node;
         this->distance = weight;
     }
 };
 
 class City {
-    unsigned short int id;
+    unsigned short id;
     list<Edge*> edges;
     unsigned int minimumDistance;
     list<City*> minimumDistanceFrom;
@@ -27,7 +27,7 @@ class City {
     bool foundDamagedCities = false;
 
 public:
-    City(int id) {
+    City(unsigned short id) {
         this->id = id;
     }
     ~City() {
@@ -102,8 +102,12 @@ public:
         return citiesDamaged;
     }
 
-    unsigned short getDamagedSize(){
-        return citiesDamaged.size();
+    list<City*> getCitiesDamaged(){
+        return citiesDamaged;
+    };
+
+    unsigned short getId() const{
+        return id;
     };
 };
 
@@ -145,17 +149,20 @@ int main() {
 
     City* maxDamagedCity = cities[0];
     for (unsigned short int i = 0; i < N; i++) {
-        cities[i]->print();
+//        cities[i]->print();
 
-        if(cities[i]->getDamagedSize() > maxDamagedCity->getDamagedSize()){
+        if(cities[i]->getCitiesDamaged().size() > maxDamagedCity->getCitiesDamaged().size()){
             maxDamagedCity = cities[i];
         }
     }
 
-    maxDamagedCity->print();
+//    maxDamagedCity->print();
 
     ofstream out("output.txt");
-    // TODO: Write output
+    out << maxDamagedCity->getCitiesDamaged().size();
+    for(auto c : maxDamagedCity->getCitiesDamaged()) {
+        out << c->getId();
+    }
     in.close();
     out.close();
     return 0;

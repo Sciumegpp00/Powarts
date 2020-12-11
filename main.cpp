@@ -26,6 +26,7 @@ struct City {
     bool minimumDistancePropagated = false;
     list<City*> citiesDamaged;
     bool foundDamagedCities = false;
+    static City* maxCity;
 
     //Methods
     City(unsigned short id) {
@@ -90,6 +91,7 @@ struct City {
         for(auto edge : edges){
             edge->node->calculateCitiesDamage();
         }
+        cout << "finished DamageFromHere" << endl;
 
         citiesDamaged.clear();
     }
@@ -120,7 +122,7 @@ struct City {
 };
 
 
-void calculateMinimumPath(City **cities, unsigned short p) {
+/*void calculateMinimumPath(City **cities, unsigned short p) {
     auto powarts = cities[p];
 
     powarts->minimumDistance = 0;
@@ -135,13 +137,13 @@ void calculateMinimumPath(City **cities, unsigned short p) {
             subEdge->node->calculateDistanceFrom(e->node, subEdge->distance + e->node->minimumDistance);
         }
     }
-}
+}*/
 
 
 int main() {
     unsigned short int N, P;
     unsigned int M;
-    ifstream in("input3.txt");
+    ifstream in("input11.txt");
     in >> N; // Cities number
     in >> M; // Edges number
     in >> P; // Powarts city id
@@ -169,27 +171,34 @@ int main() {
         c1->addEdge(new Edge(c2, w));
         c2->addEdge(new Edge(c1, w));
     }
+    cout << "Cities memorised" << endl;
 
     cities[P]->calculateDistancesFromHere();
+    cout << "ok distances" << endl;
+
     cities[P]->calculateCitiesDamageFromHere();
+    //cout << "ok2" << endl;
 
     City* maxDamagedCity = cities[0];
     for (unsigned short int i = 0; i < N; i++) {
-        cities[i]->print();
+        //cities[i]->print();
 
         if(cities[i]->getCitiesDamaged().size() > maxDamagedCity->getCitiesDamaged().size()){
             maxDamagedCity = cities[i];
+            cout << "max" << endl;
         }
     }
 
-    cout << "Max damage city: " << maxDamagedCity->getCitiesDamaged().size();
-//    maxDamagedCity->print();
+    cout << "Max damage city: ";
+    cout << maxDamagedCity->getCitiesDamaged().size() << endl;
+    maxDamagedCity->print();
 
     ofstream out("output.txt");
     out << maxDamagedCity->getCitiesDamaged().size() << '\n';
     for(auto c : maxDamagedCity->getCitiesDamaged()) {
         out << c->getId() << '\n';
     }
+    cout << "ok3" << endl;
     in.close();
     out.close();
     return 0;

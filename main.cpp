@@ -23,6 +23,7 @@ class City {
     unsigned int minimumDistance;
     list<City*> minimumDistanceFrom;
     bool minimumDistancePropagated = false;
+    unsigned short citiesDamagedSize;
     list<City*> citiesDamaged;
     bool foundDamagedCities = false;
 
@@ -32,9 +33,11 @@ public:
     }
     ~City() {
         auto iterator = edges.begin();
-        Edge* n;
-        while ((n = *iterator)) {
-            delete n;
+        Edge* e;
+        while (iterator != edges.end()) {
+            e = *iterator;
+            iterator++;
+            delete e;
         }
     }
     void addEdge(Edge* edge) {
@@ -77,45 +80,58 @@ public:
             edge->node->calculateDistanceFrom(this, minimumDistance + edge->distance);
         }
     }
-    void calculateCitiesDamageFromHere(){
+    City* calculateCitiesDamageAndGetMaxFromHere(){
         foundDamagedCities = true;
+        City **maxCity = new City*();
+        *maxCity = (*edges.begin())->node;
 
         for(auto edge : edges){
-            edge->node->calculateCitiesDamage();
+            edge->node->calculateCitiesDamage(maxCity);
         }
 
         citiesDamaged.clear();
+        citiesDamagedSize = 0;
+
+        City* maxCityToReturn = *maxCity;
+        delete maxCity;
+        return maxCityToReturn;
     }
-    list<City*> calculateCitiesDamage(){
+    void calculateCitiesDamage(City **maxCity){
         if(foundDamagedCities)
-            return citiesDamaged;
+            return;
         foundDamagedCities = true;
 
         citiesDamaged.push_front(this);
-        for(auto e : edges){
-            for(auto city : e->node->minimumDistanceFrom){
-                if(city == this && e->node->minimumDistanceFrom.size() == 1){
-                    citiesDamaged.merge(e->node->calculateCitiesDamage());
+        citiesDamagedSize = 1;
+
+        for(auto e : edges) {
+            for(auto city : e->node->minimumDistanceFrom) {
+                if(city == this && e->node->minimumDistanceFrom.size() == 1) {
+                    e->node->calculateCitiesDamage(maxCity);
+                    citiesDamaged.merge(e->node->citiesDamaged);
+                    citiesDamagedSize += e->node->citiesDamagedSize;
                 }
             }
         }
-        return citiesDamaged;
+
+        if(citiesDamagedSize > (*maxCity)->citiesDamagedSize)
+            *maxCity = this;
     }
 
     list<City*> getCitiesDamaged(){
         return citiesDamaged;
     };
-
     unsigned short getId() const{
         return id;
     };
 };
 
 
+
 int main() {
     unsigned short int N, P;
     unsigned int M;
-    ifstream in("input.txt");
+    ifstream in("input14.txt");
     in >> N; // Cities number
     in >> M; // Edges number
     in >> P; // Powarts city id
@@ -143,20 +159,25 @@ int main() {
         c1->addEdge(new Edge(c2, w));
         c2->addEdge(new Edge(c1, w));
     }
+    cout << "Added all edges\n";
 
     cities[P]->calculateDistancesFromHere();
-    cities[P]->calculateCitiesDamageFromHere();
+    cout << "Distances calculated\n";
 
-    City* maxDamagedCity = cities[0];
-    for (unsigned short int i = 0; i < N; i++) {
+    City* maxDamagedCity = cities[P]->calculateCitiesDamageAndGetMaxFromHere();
+    cout << "Damages calculated and max city got\n";
+
+//    City* maxDamagedCity = cities[0];
+//    for (unsigned short int i = 0; i < N; i++) {
 //        cities[i]->print();
-
-        if(cities[i]->getCitiesDamaged().size() > maxDamagedCity->getCitiesDamaged().size()){
-            maxDamagedCity = cities[i];
-        }
-    }
-
-    cout << "Max damage city: " << maxDamagedCity->getCitiesDamaged().size();
+//
+//        if(cities[i]->getCitiesDamaged().size() > maxDamagedCity->getCitiesDamaged().size()){
+//            maxDamagedCity = cities[i];
+//        }
+//    }
+//    cout << "Max damage calculated\n";
+//
+//    cout << "Max damage city: " << maxDamagedCity->getCitiesDamaged().size();
 //    maxDamagedCity->print();
 
     ofstream out("output.txt");
@@ -166,5 +187,10 @@ int main() {
     }
     in.close();
     out.close();
+
+    for (unsigned short i = 0; i < N; i++) {
+        delete cities[i];
+    }
+    delete [] cities;
     return 0;
 }

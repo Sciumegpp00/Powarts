@@ -106,7 +106,7 @@ public:
 
         for(auto e : edges) {
             for(auto city : e->node->minimumDistanceFrom) {
-                if(city == this && e->node->minimumDistanceFrom.size() == 1) {
+                if(city == this && e->node->citiesDamagedSize == 1) {
                     e->node->calculateCitiesDamage(maxCity);
                     citiesDamaged.merge(e->node->citiesDamaged);
                     citiesDamagedSize += e->node->citiesDamagedSize;

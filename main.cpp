@@ -125,7 +125,7 @@ public:
         return maxCityToReturn;
     }
     void calculateCitiesDamage(City **maxCity, City *cityDamaged){
-        if(foundDamagedCities)
+        if(foundDamagedCities && !existsInDamagedFrom(cityDamaged))
             return;
         foundDamagedCities = true;
 
@@ -133,27 +133,25 @@ public:
         damagedFromSize++;
         citiesDamagedSize = 1;
 
-        bool ok, isThisCity;
+        bool ok, isThisCity, isNotYetDone;
 
         for(auto e : edges) {
+            if(e->node->foundDamagedCities)
+                continue;
+
             ok = true;
             isThisCity = false;
-
-//            hasOtherRoutes = e->node->minimumDistanceFromSize > 1 &&
-//                    e->node->damagedFromSize + 1 < e->node->minimumDistanceFromSize;
-//            if(hasOtherRoutes){
-//                e->node->damagedFromSize++;
-//                e->node->damagedFrom.push_front(cityDamaged);
-//                continue;
-//            }
+            isNotYetDone = false;
 
             for (auto cityFrom : e->node->minimumDistanceFrom) {
                 if(!isThisCity && cityFrom == this)
                     isThisCity = true;
                 if(!cityFrom->existsInDamagedFrom(cityDamaged))
                     ok = false;
+                if(!cityFrom->foundDamagedCities)
+                    isNotYetDone = true;
             }
-            if(!isThisCity)
+            if(!isThisCity || isNotYetDone)
                 continue;
 
             if(ok) {
@@ -161,8 +159,6 @@ public:
                 nextCitiesDamaged.push_back(e->node);
                 citiesDamagedSize += e->node->citiesDamagedSize;
             } else {
-//                e->node->damagedFrom.clear();
-//                e->node->damagedFromSize = 0;
                 e->node->calculateCitiesDamage(maxCity, e->node);
             }
         }
@@ -177,15 +173,6 @@ public:
                 return true;
         }
         return false;
-    }
-    bool onlyExistsInDamagedFrom(City *city) {
-        if(damagedFrom.empty())
-            return false;
-        for(auto c : damagedFrom) {
-            if(c != city)
-                return false;
-        }
-        return true;
     }
     unsigned short getCitiesDamagedSize() const{
         return citiesDamagedSize;
@@ -208,7 +195,7 @@ int main() {
     in >> N; // Cities number
     in >> M; // Edges number
     in >> P; // Powarts city id
-    cout << "Cities: " << N << '\n';
+//    cout << "Cities: " << N << '\n';
     City **cities = (City**) calloc(N, sizeof(City*));
 
     unsigned int c1Id, c2Id, w;
@@ -232,19 +219,14 @@ int main() {
         c1->addEdge(new Edge(c2, w));
         c2->addEdge(new Edge(c1, w));
     }
-    cout << "Added all edges\n";
+//    cout << "Added all edges\n";
 
     cities[P]->calculateDistancesFromHereIterative();
-    cout << "Distances calculated\n";
+//    cout << "Distances calculated\n";
 
     City* maxDamagedCity = cities[P]->calculateCitiesDamageAndGetMaxFromHere();
-    cout << "Damages calculated and max city got\n";
+//    cout << "Damages calculated and max city got\n";
 
-//    for (unsigned short int i = 0; i < N; i++) {
-//        cities[i]->print();
-//    }
-//
-//    cout << "Max damage city: " << maxDamagedCity->getCitiesDamaged().size();
 //    maxDamagedCity->print();
 
     ofstream out("output.txt");

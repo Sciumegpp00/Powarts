@@ -9,8 +9,6 @@ struct Edge;
 struct CityQueue;
 class City;
 
-bool existsAndRemove(list<CityQueue*>* queue, CityQueue* cityQueue);
-
 struct Edge {
     City* node;
     unsigned short distance;
@@ -22,17 +20,20 @@ struct Edge {
 };
 
 struct CityQueue {
+    bool reCalculated;
     City* from;
     queue<Edge*>* edgeQueue;
 
-    CityQueue(City* f, list<Edge*> *edges) {
+    CityQueue(City* f, list<Edge*> *edges, bool reCalculated) {
+        this->reCalculated = reCalculated;
         from = f;
         edgeQueue = new queue<Edge*>();
         for(auto e : *edges) {
             edgeQueue->push(e);
         }
     }
-    CityQueue(City* f, queue<Edge*> *queue) {
+    CityQueue(City* f, queue<Edge*> *queue, bool reCalculated) {
+        this->reCalculated = reCalculated;
         from = f;
         edgeQueue = queue;
     }
@@ -46,6 +47,7 @@ class City {
     list<Edge*> edges;
     unsigned int minimumDistance;
     list<City*> minimumDistanceFrom;
+    bool minimumDistanceCalculated = false;
     bool minimumDistancePropagated = false;
     unsigned short citiesDamagedSize;
     list<City*> citiesDamaged;
@@ -79,7 +81,7 @@ public:
         minimumDistanceFrom.push_front(this);
 
         auto queue = new list<CityQueue*>();
-        queue->push_back(new CityQueue(this, &edges));
+        queue->push_back(new CityQueue(this, &edges, false));
 
         CityQueue* cityQueue;
         City* fromCity;
@@ -88,24 +90,17 @@ public:
             cityQueue = queue->front();
             queue->pop_front();
             fromCity = cityQueue->from;
-            fromCity->print();
-            if(fromCity->id == 0)
-                cout << "";
 
             while (!cityQueue->edgeQueue->empty()) {
                 cityEdge = cityQueue->edgeQueue->front();
                 cityQueue->edgeQueue->pop();
 
                 auto cq = cityEdge->node->
-                        calculateDistanceFromIterative(fromCity, fromCity->minimumDistance + cityEdge->distance);
-                cout << "   ";
-                cityEdge->node->print();
-                if(cq) {
-                    if (existsAndRemove(queue, cq))
-                        delete cq;
-                    else
-                        queue->push_back(cq);
-                }
+                        calculateDistanceFromIterative(fromCity,
+                                                       fromCity->minimumDistance + cityEdge->distance,
+                                                       cityQueue->reCalculated);
+                if(cq)
+                    queue->push_back(cq);
             }
             delete cityQueue;
         } while (!queue->empty());
@@ -118,7 +113,13 @@ public:
 
         calculateEdges();
     }
-    CityQueue* calculateDistanceFromIterative(City* from, unsigned int weight) {
+    CityQueue* calculateDistanceFromIterative(City* from, unsigned int weight, bool reCalculated) {
+        if(minimumDistanceCalculated){
+            if(!reCalculated)
+                return NULL;
+        } else
+            minimumDistanceCalculated = true;
+
         if(minimumDistanceFrom.empty()) {
             minimumDistance = weight;
             minimumDistanceFrom.push_front(from);
@@ -129,13 +130,14 @@ public:
             minimumDistance = weight;
             minimumDistanceFrom.clear();
             minimumDistanceFrom.push_front(from);
+            reCalculated = true;
         } else
             return NULL;
 
         if(++edges.begin() == edges.end())
             return NULL; // If it's a leaf return null
 
-        return new CityQueue(this, &edges);
+        return new CityQueue(this, &edges, reCalculated);
 
 //        auto edgesToCalculate = new list<Edge*>();
 //
@@ -220,30 +222,6 @@ public:
     };
 };
 
-
-struct isFromCityPresent {
-    CityQueue* cityQueue;
-    bool returned;
-
-    isFromCityPresent(CityQueue* cityQueue1) {
-        cityQueue = cityQueue1;
-    }
-
-    bool operator() (CityQueue* value) {
-        if(returned)
-            return false;
-        else {
-            returned = value->from->getId() == cityQueue->from->getId();
-            return returned;
-        }
-    }
-};
-
-bool existsAndRemove(list<CityQueue*>* queue, CityQueue* cityQueue) {
-    isFromCityPresent op = isFromCityPresent(cityQueue);
-    queue->remove_if(op);
-    return op.returned;
-}
 
 
 int main() {

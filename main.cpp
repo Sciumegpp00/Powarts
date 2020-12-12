@@ -24,8 +24,11 @@ class City {
     list<Edge*> edges;
     unsigned int minimumDistance;
     list<City*> minimumDistanceFrom;
+    unsigned short minimumDistanceFromSize;
     unsigned short citiesDamagedSize;
+    list<City*> nextCitiesDamaged;
     list<City*> damagedFrom;
+    unsigned short damagedFromSize;
     bool foundDamagedCities = false;
 
 public:
@@ -51,6 +54,7 @@ public:
         }
         cout << "  damaged cities -> " << citiesDamagedSize << "\n";
     }
+
     void calculateDistancesFromHereIterative() {
         minimumDistance = 0;
         minimumDistanceFrom.push_front(this);
@@ -80,19 +84,22 @@ public:
 
         delete queue;
     }
-
     City* calculateDistanceFromIterative(City* from, unsigned int weight) {
         if(minimumDistanceFrom.empty()) {
             minimumDistance = weight;
             minimumDistanceFrom.push_front(from);
+            minimumDistanceFromSize = 1;
         } else if(minimumDistance == weight) {
-            if(find(minimumDistanceFrom.begin(), minimumDistanceFrom.end(), from) == minimumDistanceFrom.end())
+            if(find(minimumDistanceFrom.begin(), minimumDistanceFrom.end(), from) == minimumDistanceFrom.end()){
                 minimumDistanceFrom.push_front(from);
+                minimumDistanceFromSize++;
+            }
             return NULL;
         } else if(weight < minimumDistance) {
             minimumDistance = weight;
             minimumDistanceFrom.clear();
             minimumDistanceFrom.push_front(from);
+            minimumDistanceFromSize = 1;
         } else
             return NULL;
 
@@ -123,6 +130,7 @@ public:
         foundDamagedCities = true;
 
         damagedFrom.push_front(cityDamaged);
+        damagedFromSize++;
         citiesDamagedSize = 1;
 
         bool ok, isThisCity;
@@ -130,6 +138,14 @@ public:
         for(auto e : edges) {
             ok = true;
             isThisCity = false;
+
+//            hasOtherRoutes = e->node->minimumDistanceFromSize > 1 &&
+//                    e->node->damagedFromSize + 1 < e->node->minimumDistanceFromSize;
+//            if(hasOtherRoutes){
+//                e->node->damagedFromSize++;
+//                e->node->damagedFrom.push_front(cityDamaged);
+//                continue;
+//            }
 
             for (auto cityFrom : e->node->minimumDistanceFrom) {
                 if(!isThisCity && cityFrom == this)
@@ -140,11 +156,15 @@ public:
             if(!isThisCity)
                 continue;
 
-            if(ok){
+            if(ok) {
                 e->node->calculateCitiesDamage(maxCity, cityDamaged);
+                nextCitiesDamaged.push_back(e->node);
                 citiesDamagedSize += e->node->citiesDamagedSize;
-            } else
+            } else {
+//                e->node->damagedFrom.clear();
+//                e->node->damagedFromSize = 0;
                 e->node->calculateCitiesDamage(maxCity, e->node);
+            }
         }
 
         if(citiesDamagedSize > (*maxCity)->citiesDamagedSize)
@@ -158,13 +178,25 @@ public:
         }
         return false;
     }
-
+    bool onlyExistsInDamagedFrom(City *city) {
+        if(damagedFrom.empty())
+            return false;
+        for(auto c : damagedFrom) {
+            if(c != city)
+                return false;
+        }
+        return true;
+    }
     unsigned short getCitiesDamagedSize() const{
         return citiesDamagedSize;
-    };
+    }
+    list<City*>* getNextCitiesDamaged() {
+        return &nextCitiesDamaged;
+    }
+
     unsigned short getId() const{
         return id;
-    };
+    }
 };
 
 
@@ -172,7 +204,7 @@ public:
 int main() {
     unsigned short int N, P;
     unsigned int M;
-    ifstream in("input13.txt");
+    ifstream in("input.txt");
     in >> N; // Cities number
     in >> M; // Edges number
     in >> P; // Powarts city id
@@ -218,9 +250,17 @@ int main() {
     ofstream out("output.txt");
     out << maxDamagedCity->getCitiesDamagedSize() << '\n';
 
-    for(unsigned short i = 0; i < N; i++) {
-        if(cities[i]->existsInDamagedFrom(maxDamagedCity)){
-            out << cities[i]->getId() << endl;
+    queue<City*> cityQueue;
+    City *city;
+    cityQueue.push(maxDamagedCity);
+
+    while (!cityQueue.empty()) {
+        city = cityQueue.front();
+        cityQueue.pop();
+
+        out << city->getId() << '\n';
+        for(auto c : *city->getNextCitiesDamaged()) {
+            cityQueue.push(c);
         }
     }
     in.close();

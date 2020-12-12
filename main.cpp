@@ -48,6 +48,7 @@ class City {
     bool minimumDistancePropagated = false;
     unsigned short citiesDamagedSize;
     City *damagedFrom;
+    bool damagePrinted = false;
     bool foundDamagedCities = false;
 
 public:
@@ -73,11 +74,19 @@ public:
         }
         cout << "  damaged cities -> " << citiesDamagedSize << "\n";
     }
-    void printDamageToFileFromHere(ofstream *out) {
-        
+    void printDamageToFileFromHere(ofstream *file) {
+        printDamageToFile(file, this);
     }
-    void printDamageToFile(ofstream *out, City* damagedFrom) {
+    void printDamageToFile(ofstream *file, City *damagedFrom) {
+        if(damagePrinted)
+            return;
+        damagePrinted = true;
 
+        *file << id << '\n';
+        for(auto e : edges) {
+            if(e->node->damagedFrom == damagedFrom)
+                printDamageToFile(file, damagedFrom);
+        }
     }
     void calculateDistancesFromHereIterative() {
         minimumDistance = 0;
@@ -194,7 +203,7 @@ public:
 int main() {
     unsigned short int N, P;
     unsigned int M;
-    ifstream in("input19.txt");
+    ifstream in("input0.txt");
     in >> N; // Cities number
     in >> M; // Edges number
     in >> P; // Powarts city id
@@ -239,11 +248,9 @@ int main() {
 
     ofstream out("output.txt");
     out << maxDamagedCity->getCitiesDamagedSize() << '\n';
-    for(int i = 0; i < N; i++) {
-        if(cities[i]->getDamagedFrom() == maxDamagedCity){
-            out << cities[i]->getId() << endl;
-        }
-    }
+//    for(auto c : maxDamagedCity->getCitiesDamaged()) {
+//        out << c->getId() << '\n';
+//    }
     in.close();
     out.close();
 

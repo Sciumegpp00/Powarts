@@ -1,11 +1,15 @@
 #include <iostream>
 #include <fstream>
 #include <list>
+#include <queue>
 
 using namespace std;
 
 struct Edge;
+struct CityQueue;
 class City;
+
+bool existsAndRemove(list<CityQueue*>* queue, CityQueue* cityQueue);
 
 struct Edge {
     City* node;
@@ -14,6 +18,26 @@ struct Edge {
     Edge(City* node, unsigned short weight) {
         this->node = node;
         this->distance = weight;
+    }
+};
+
+struct CityQueue {
+    City* from;
+    queue<Edge*>* edgeQueue;
+
+    CityQueue(City* f, list<Edge*> *edges) {
+        from = f;
+        edgeQueue = new queue<Edge*>();
+        for(auto e : *edges) {
+            edgeQueue->push(e);
+        }
+    }
+    CityQueue(City* f, queue<Edge*> *queue) {
+        from = f;
+        edgeQueue = queue;
+    }
+    ~CityQueue() {
+        delete edgeQueue;
     }
 };
 
@@ -50,11 +74,79 @@ public:
         }
         cout << "  damaged cities -> " << citiesDamaged.size() << "\n";
     }
+    void calculateDistancesFromHereIterative() {
+        minimumDistance = 0;
+        minimumDistanceFrom.push_front(this);
+
+        auto queue = new list<CityQueue*>();
+        queue->push_back(new CityQueue(this, &edges));
+
+        CityQueue* cityQueue;
+        City* fromCity;
+        Edge* cityEdge;
+        do {
+            cityQueue = queue->front();
+            queue->pop_front();
+            fromCity = cityQueue->from;
+            fromCity->print();
+            if(fromCity->id == 0)
+                cout << "";
+
+            while (!cityQueue->edgeQueue->empty()) {
+                cityEdge = cityQueue->edgeQueue->front();
+                cityQueue->edgeQueue->pop();
+
+                auto cq = cityEdge->node->
+                        calculateDistanceFromIterative(fromCity, fromCity->minimumDistance + cityEdge->distance);
+                cout << "   ";
+                cityEdge->node->print();
+                if(cq) {
+                    if (existsAndRemove(queue, cq))
+                        delete cq;
+                    else
+                        queue->push_back(cq);
+                }
+            }
+            delete cityQueue;
+        } while (!queue->empty());
+
+        delete queue;
+    }
     void calculateDistancesFromHere() {
         minimumDistance = 0;
         minimumDistanceFrom.push_front(this);
 
         calculateEdges();
+    }
+    CityQueue* calculateDistanceFromIterative(City* from, unsigned int weight) {
+        if(minimumDistanceFrom.empty()) {
+            minimumDistance = weight;
+            minimumDistanceFrom.push_front(from);
+        } else if(minimumDistance == weight) {
+            minimumDistanceFrom.push_front(from);
+            return NULL;
+        } else if(weight < minimumDistance) {
+            minimumDistance = weight;
+            minimumDistanceFrom.clear();
+            minimumDistanceFrom.push_front(from);
+        } else
+            return NULL;
+
+        if(++edges.begin() == edges.end())
+            return NULL; // If it's a leaf return null
+
+        return new CityQueue(this, &edges);
+
+//        auto edgesToCalculate = new list<Edge*>();
+//
+//        for (auto c : minimumDistanceFrom) {
+//        }
+//
+//        CityQueue* toReturn = NULL;
+//        if(!edgesToCalculate->empty())
+//            toReturn = new CityQueue(this, edgesToCalculate);
+//        delete edgesToCalculate;
+//        return toReturn;
     }
     void calculateDistanceFrom(City* from, unsigned int weight) {
         if(minimumDistanceFrom.empty()) {
@@ -106,7 +198,9 @@ public:
 
         for(auto e : edges) {
             for(auto city : e->node->minimumDistanceFrom) {
-                if(city == this && e->node->citiesDamagedSize == 1) {
+                // Check if there is only one cify in minimum distance from
+                auto onlyOneFrom = ++e->node->minimumDistanceFrom.begin() == e->node->minimumDistanceFrom.end();
+                if(city == this && onlyOneFrom) {
                     e->node->calculateCitiesDamage(maxCity);
                     citiesDamaged.merge(e->node->citiesDamaged);
                     citiesDamagedSize += e->node->citiesDamagedSize;
@@ -127,11 +221,35 @@ public:
 };
 
 
+struct isFromCityPresent {
+    CityQueue* cityQueue;
+    bool returned;
+
+    isFromCityPresent(CityQueue* cityQueue1) {
+        cityQueue = cityQueue1;
+    }
+
+    bool operator() (CityQueue* value) {
+        if(returned)
+            return false;
+        else {
+            returned = value->from->getId() == cityQueue->from->getId();
+            return returned;
+        }
+    }
+};
+
+bool existsAndRemove(list<CityQueue*>* queue, CityQueue* cityQueue) {
+    isFromCityPresent op = isFromCityPresent(cityQueue);
+    queue->remove_if(op);
+    return op.returned;
+}
+
 
 int main() {
     unsigned short int N, P;
     unsigned int M;
-    ifstream in("input14.txt");
+    ifstream in("input0.txt");
     in >> N; // Cities number
     in >> M; // Edges number
     in >> P; // Powarts city id
@@ -161,21 +279,15 @@ int main() {
     }
     cout << "Added all edges\n";
 
-    cities[P]->calculateDistancesFromHere();
+    cities[P]->calculateDistancesFromHereIterative();
     cout << "Distances calculated\n";
 
     City* maxDamagedCity = cities[P]->calculateCitiesDamageAndGetMaxFromHere();
     cout << "Damages calculated and max city got\n";
 
-//    City* maxDamagedCity = cities[0];
 //    for (unsigned short int i = 0; i < N; i++) {
 //        cities[i]->print();
-//
-//        if(cities[i]->getCitiesDamaged().size() > maxDamagedCity->getCitiesDamaged().size()){
-//            maxDamagedCity = cities[i];
-//        }
 //    }
-//    cout << "Max damage calculated\n";
 //
 //    cout << "Max damage city: " << maxDamagedCity->getCitiesDamaged().size();
 //    maxDamagedCity->print();

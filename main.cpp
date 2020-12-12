@@ -72,6 +72,12 @@ public:
         }
         cout << "  damaged cities -> " << citiesDamagedSize << "\n";
     }
+    void printDamageToFileFromHere(ofstream out) {
+        
+    }
+    void printDamageToFile(ofstream out, City* damagedFrom) {
+
+    }
     void calculateDistancesFromHereIterative() {
         minimumDistance = 0;
         minimumDistanceFrom.push_front(this);

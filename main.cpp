@@ -45,9 +45,8 @@ class City {
     list<Edge*> edges;
     unsigned int minimumDistance;
     list<City*> minimumDistanceFrom;
-    bool minimumDistancePropagated = false;
     unsigned short citiesDamagedSize;
-    City *damagedFrom;
+    list<City*> damagedFrom;
     bool damagePrinted = false;
     bool foundDamagedCities = false;
 
@@ -73,20 +72,6 @@ public:
             cout << city->id << " ";
         }
         cout << "  damaged cities -> " << citiesDamagedSize << "\n";
-    }
-    void printDamageToFileFromHere(ofstream *file) {
-        printDamageToFile(file, this);
-    }
-    void printDamageToFile(ofstream *file, City *damagedFrom) {
-        if(damagePrinted)
-            return;
-        damagePrinted = true;
-
-        *file << id << '\n';
-        for(auto e : edges) {
-            if(e->node->damagedFrom == damagedFrom)
-                printDamageToFile(file, damagedFrom);
-        }
     }
     void calculateDistancesFromHereIterative() {
         minimumDistance = 0;
@@ -160,7 +145,7 @@ public:
             return;
         foundDamagedCities = true;
 
-        damagedFrom = cityDamaged;
+        damagedFrom.push_front(cityDamaged);
         citiesDamagedSize = 1;
 
         for(auto e : edges) {
@@ -170,7 +155,7 @@ public:
             for (auto cityFrom : e->node->minimumDistanceFrom) {
                 if(!isThisCity && cityFrom == this)
                     isThisCity = true;
-                if(cityFrom->damagedFrom != cityDamaged)
+                if(!cityFrom->existsInDamagedFrom(cityDamaged))
                     ok = false;
             }
             if(!isThisCity)
@@ -187,15 +172,20 @@ public:
             *maxCity = this;
     }
 
+    bool existsInDamagedFrom(City *city) {
+        for(auto c : damagedFrom) {
+            if(c == city)
+                return true;
+        }
+        return false;
+    }
+
     unsigned short getCitiesDamagedSize(){
         return citiesDamagedSize;
     };
     unsigned short getId() const{
         return id;
     };
-    City* getDamagedFrom(){
-        return damagedFrom;
-    }
 };
 
 
@@ -203,7 +193,7 @@ public:
 int main() {
     unsigned short int N, P;
     unsigned int M;
-    ifstream in("input0.txt");
+    ifstream in("input9.txt");
     in >> N; // Cities number
     in >> M; // Edges number
     in >> P; // Powarts city id
@@ -248,9 +238,12 @@ int main() {
 
     ofstream out("output.txt");
     out << maxDamagedCity->getCitiesDamagedSize() << '\n';
-//    for(auto c : maxDamagedCity->getCitiesDamaged()) {
-//        out << c->getId() << '\n';
-//    }
+
+    for(unsigned short i = 0; i < N; i++) {
+        if(cities[i]->existsInDamagedFrom(maxDamagedCity)){
+            out << cities[i]->getId() << endl;
+        }
+    }
     in.close();
     out.close();
 

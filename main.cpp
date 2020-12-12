@@ -46,7 +46,6 @@ class City {
     list<City*> minimumDistanceFrom;
     bool minimumDistancePropagated = false;
     unsigned short citiesDamagedSize;
-    list<City*> citiesDamaged;
     bool foundDamagedCities = false;
 
 public:
@@ -70,7 +69,7 @@ public:
         for(auto city : minimumDistanceFrom){
             cout << city->id << " ";
         }
-        cout << "  damaged cities -> " << citiesDamaged.size() << "\n";
+        cout << "  damaged cities -> " << citiesDamagedSize << "\n";
     }
     void calculateDistancesFromHereIterative() {
         minimumDistance = 0;
@@ -172,7 +171,6 @@ public:
             edge->node->calculateCitiesDamage(maxCity);
         }
 
-        citiesDamaged.clear();
         citiesDamagedSize = 0;
 
         City* maxCityToReturn = *maxCity;
@@ -184,18 +182,19 @@ public:
             return;
         foundDamagedCities = true;
 
-        citiesDamaged.push_front(this);
         citiesDamagedSize = 1;
 
         for(auto e : edges) {
-            for(auto city : e->node->minimumDistanceFrom) {
-                // Check if there is only one city in minimum distance from
-                auto onlyOneFrom = ++e->node->minimumDistanceFrom.begin() == e->node->minimumDistanceFrom.end();
-                if(city == this && onlyOneFrom) {
-                    e->node->calculateCitiesDamage(maxCity);
-                    citiesDamaged.merge(e->node->citiesDamaged);
-                    citiesDamagedSize += e->node->citiesDamagedSize;
-                }
+            e->node->calculateCitiesDamage(maxCity);
+
+            // Check if there is only one city in minimum distance from
+            auto onlyOneFrom = ++e->node->minimumDistanceFrom.begin() == e->node->minimumDistanceFrom.end();
+            if(!onlyOneFrom)
+                continue;
+
+            auto city = *e->node->minimumDistanceFrom.begin();
+            if(city == this) {
+                citiesDamagedSize += e->node->citiesDamagedSize;
             }
         }
 
@@ -203,8 +202,8 @@ public:
             *maxCity = this;
     }
 
-    list<City*> getCitiesDamaged(){
-        return citiesDamaged;
+    unsigned short getCitiesDamagedSize(){
+        return citiesDamagedSize;
     };
     unsigned short getId() const{
         return id;
@@ -216,7 +215,7 @@ public:
 int main() {
     unsigned short int N, P;
     unsigned int M;
-    ifstream in("input19.txt");
+    ifstream in("input00.txt");
     in >> N; // Cities number
     in >> M; // Edges number
     in >> P; // Powarts city id
@@ -252,18 +251,18 @@ int main() {
     City* maxDamagedCity = cities[P]->calculateCitiesDamageAndGetMaxFromHere();
     cout << "Damages calculated and max city got\n";
 
-//    for (unsigned short int i = 0; i < N; i++) {
-//        cities[i]->print();
-//    }
+    for (unsigned short int i = 0; i < N; i++) {
+        cities[i]->print();
+    }
 //
 //    cout << "Max damage city: " << maxDamagedCity->getCitiesDamaged().size();
 //    maxDamagedCity->print();
 
     ofstream out("output.txt");
-    out << maxDamagedCity->getCitiesDamaged().size() << '\n';
-    for(auto c : maxDamagedCity->getCitiesDamaged()) {
-        out << c->getId() << '\n';
-    }
+    out << maxDamagedCity->getCitiesDamagedSize() << '\n';
+//    for(auto c : maxDamagedCity->getCitiesDamaged()) {
+//        out << c->getId() << '\n';
+//    }
     in.close();
     out.close();
 

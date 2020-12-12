@@ -2,6 +2,7 @@
 #include <fstream>
 #include <list>
 #include <queue>
+#include <algorithm>
 
 using namespace std;
 
@@ -72,10 +73,10 @@ public:
         }
         cout << "  damaged cities -> " << citiesDamagedSize << "\n";
     }
-    void printDamageToFileFromHere(ofstream out) {
+    void printDamageToFileFromHere(ofstream *out) {
         
     }
-    void printDamageToFile(ofstream out, City* damagedFrom) {
+    void printDamageToFile(ofstream *out, City* damagedFrom) {
 
     }
     void calculateDistancesFromHereIterative() {
@@ -108,12 +109,7 @@ public:
 
         delete queue;
     }
-    void calculateDistancesFromHere() {
-        minimumDistance = 0;
-        minimumDistanceFrom.push_front(this);
 
-        calculateEdges();
-    }
     CityQueue* calculateDistanceFromIterative(City* from, unsigned int weight) {
         if(minimumDistanceFrom.empty()) {
             minimumDistance = weight;
@@ -133,42 +129,8 @@ public:
             return NULL; // If it's a leaf return null
 
         return new CityQueue(this, &edges);
-
-//        auto edgesToCalculate = new list<Edge*>();
-//
-//        for (auto c : minimumDistanceFrom) {
-//        }
-//
-//        CityQueue* toReturn = NULL;
-//        if(!edgesToCalculate->empty())
-//            toReturn = new CityQueue(this, edgesToCalculate);
-//        delete edgesToCalculate;
-//        return toReturn;
     }
-    void calculateDistanceFrom(City* from, unsigned int weight) {
-        if(minimumDistanceFrom.empty()) {
-            minimumDistance = weight;
-            minimumDistanceFrom.push_front(from);
-        } else if(minimumDistance == weight) {
-            minimumDistanceFrom.push_front(from);
-        } else if(weight < minimumDistance) {
-            minimumDistance = weight;
-            minimumDistanceFrom.clear();
-            minimumDistanceFrom.push_front(from);
-            minimumDistancePropagated = false;
-        }
 
-        calculateEdges();
-    }
-    void calculateEdges() {
-        if (minimumDistancePropagated)
-            return;
-        minimumDistancePropagated = true;
-
-        for (auto edge : edges) {
-            edge->node->calculateDistanceFrom(this, minimumDistance + edge->distance);
-        }
-    }
     City* calculateCitiesDamageAndGetMaxFromHere(){
         foundDamagedCities = true;
         City **maxCity = new City*();
@@ -188,9 +150,6 @@ public:
         if(foundDamagedCities)
             return;
         foundDamagedCities = true;
-
-        if(id == 1 || id == 3 || id == 4 || id == 5)
-            cout << "";
 
         damagedFrom = cityDamaged;
         citiesDamagedSize = 1;
@@ -225,6 +184,9 @@ public:
     unsigned short getId() const{
         return id;
     };
+    City* getDamagedFrom(){
+        return damagedFrom;
+    }
 };
 
 
@@ -277,9 +239,11 @@ int main() {
 
     ofstream out("output.txt");
     out << maxDamagedCity->getCitiesDamagedSize() << '\n';
-//    for(auto c : maxDamagedCity->getCitiesDamaged()) {
-//        out << c->getId() << '\n';
-//    }
+    for(int i = 0; i < N; i++) {
+        if(cities[i]->getDamagedFrom() == maxDamagedCity){
+            out << cities[i]->getId() << endl;
+        }
+    }
     in.close();
     out.close();
 

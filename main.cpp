@@ -31,10 +31,10 @@ struct CityQueue {
             edgeQueue->push(e);
         }
     }
-    CityQueue(City* f, queue<Edge*> *queue) {
-        from = f;
-        edgeQueue = queue;
-    }
+//    CityQueue(City* f, queue<Edge*> *queue) {
+//        from = f;
+//        edgeQueue = queue;
+//    }
     ~CityQueue() {
         delete edgeQueue;
     }
@@ -47,7 +47,6 @@ class City {
     list<City*> minimumDistanceFrom;
     unsigned short citiesDamagedSize;
     list<City*> damagedFrom;
-    bool damagePrinted = false;
     bool foundDamagedCities = false;
 
 public:
@@ -180,7 +179,7 @@ public:
         return false;
     }
 
-    unsigned short getCitiesDamagedSize(){
+    unsigned short getCitiesDamagedSize() const{
         return citiesDamagedSize;
     };
     unsigned short getId() const{
@@ -193,7 +192,7 @@ public:
 int main() {
     unsigned short int N, P;
     unsigned int M;
-    ifstream in("input9.txt");
+    ifstream in("input.txt");
     in >> N; // Cities number
     in >> M; // Edges number
     in >> P; // Powarts city id

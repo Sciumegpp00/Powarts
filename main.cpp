@@ -20,20 +20,17 @@ struct Edge {
 };
 
 struct CityQueue {
-    bool reCalculated;
     City* from;
     queue<Edge*>* edgeQueue;
 
-    CityQueue(City* f, list<Edge*> *edges, bool reCalculated) {
-        this->reCalculated = reCalculated;
+    CityQueue(City* f, list<Edge*> *edges) {
         from = f;
         edgeQueue = new queue<Edge*>();
         for(auto e : *edges) {
             edgeQueue->push(e);
         }
     }
-    CityQueue(City* f, queue<Edge*> *queue, bool reCalculated) {
-        this->reCalculated = reCalculated;
+    CityQueue(City* f, queue<Edge*> *queue) {
         from = f;
         edgeQueue = queue;
     }
@@ -47,7 +44,6 @@ class City {
     list<Edge*> edges;
     unsigned int minimumDistance;
     list<City*> minimumDistanceFrom;
-    bool minimumDistanceCalculated = false;
     bool minimumDistancePropagated = false;
     unsigned short citiesDamagedSize;
     list<City*> citiesDamaged;
@@ -81,7 +77,7 @@ public:
         minimumDistanceFrom.push_front(this);
 
         auto queue = new list<CityQueue*>();
-        queue->push_back(new CityQueue(this, &edges, false));
+        queue->push_back(new CityQueue(this, &edges));
 
         CityQueue* cityQueue;
         City* fromCity;
@@ -97,8 +93,7 @@ public:
 
                 auto cq = cityEdge->node->
                         calculateDistanceFromIterative(fromCity,
-                                                       fromCity->minimumDistance + cityEdge->distance,
-                                                       cityQueue->reCalculated);
+                                                       fromCity->minimumDistance + cityEdge->distance);
                 if(cq)
                     queue->push_back(cq);
             }
@@ -113,31 +108,25 @@ public:
 
         calculateEdges();
     }
-    CityQueue* calculateDistanceFromIterative(City* from, unsigned int weight, bool reCalculated) {
-        if(minimumDistanceCalculated){
-            if(!reCalculated)
-                return NULL;
-        } else
-            minimumDistanceCalculated = true;
-
+    CityQueue* calculateDistanceFromIterative(City* from, unsigned int weight) {
         if(minimumDistanceFrom.empty()) {
             minimumDistance = weight;
             minimumDistanceFrom.push_front(from);
         } else if(minimumDistance == weight) {
-            minimumDistanceFrom.push_front(from);
+            if(find(minimumDistanceFrom.begin(), minimumDistanceFrom.end(), from) == minimumDistanceFrom.end())
+                minimumDistanceFrom.push_front(from);
             return NULL;
         } else if(weight < minimumDistance) {
             minimumDistance = weight;
             minimumDistanceFrom.clear();
             minimumDistanceFrom.push_front(from);
-            reCalculated = true;
         } else
             return NULL;
 
         if(++edges.begin() == edges.end())
             return NULL; // If it's a leaf return null
 
-        return new CityQueue(this, &edges, reCalculated);
+        return new CityQueue(this, &edges);
 
 //        auto edgesToCalculate = new list<Edge*>();
 //
@@ -200,7 +189,7 @@ public:
 
         for(auto e : edges) {
             for(auto city : e->node->minimumDistanceFrom) {
-                // Check if there is only one cify in minimum distance from
+                // Check if there is only one city in minimum distance from
                 auto onlyOneFrom = ++e->node->minimumDistanceFrom.begin() == e->node->minimumDistanceFrom.end();
                 if(city == this && onlyOneFrom) {
                     e->node->calculateCitiesDamage(maxCity);
@@ -227,7 +216,7 @@ public:
 int main() {
     unsigned short int N, P;
     unsigned int M;
-    ifstream in("input0.txt");
+    ifstream in("input19.txt");
     in >> N; // Cities number
     in >> M; // Edges number
     in >> P; // Powarts city id
